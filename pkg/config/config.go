@@ -2,6 +2,7 @@ package config
 
 import (
 	"log"
+	"os"
 
 	"github.com/joho/godotenv"
 )
@@ -12,6 +13,13 @@ type Config struct {
 	JWTSecret          string
 	StripeSecretKey    string
 	StripWebhookSecret string
+}
+
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
 
 func Load() *Config {
