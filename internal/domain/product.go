@@ -3,15 +3,15 @@ package domain
 import "time"
 
 type Product struct {
-	ID          int64     `json:"db:id"`
-	Name        string    `json:"db:name"`
-	Description string    `json:"db:description"`
-	Price       float64   `json:"db:price"`
-	Stock       int       `json:"db:stock"`
-	Category    string    `json:"db:category"`
-	IsActive    bool      `json:"db:is_active"`
-	CreatedAt   time.Time `json:"db:created_at"`
-	UpdatedAt   time.Time `json:"db:updated_at"`
+	ID          int64     `db:"id"`
+	Name        string    `db:"name"`
+	Description string    `db:"description"`
+	Price       float64   `db:"price"`
+	Stock       int       `db:"stock"`
+	Category    string    `db:"category"`
+	IsActive    bool      `db:"is_active"`
+	CreatedAt   time.Time `db:"created_at"`
+	UpdatedAt   time.Time `db:"updated_at"`
 }
 
 // resered to admin
