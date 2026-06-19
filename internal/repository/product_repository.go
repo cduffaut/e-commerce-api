@@ -12,7 +12,7 @@ import (
 type ProductRepository interface {
 	Create(ctx context.Context, product *domain.Product) error
 	GetByID(ctx context.Context, id int64) (*domain.Product, error)
-	List(ctx context.Context, filter []domain.Product) ([]domain.Product, error)
+	List(ctx context.Context, filter domain.ProductFilter) ([]domain.Product, error)
 	Update(ctx context.Context, product *domain.Product) error
 	Delete(ctx context.Context, id int64) error
 	UpdateStock(ctx context.Context, id int64, delta int) error
@@ -37,7 +37,7 @@ func (r *productRepository) Create(ctx context.Context, product *domain.Product)
 		&product.ID, &product.CreatedAt, &product.UpdatedAt)
 }
 
-func (r *productRepository) GetbyID(ctx context.Context, id int64) (*domain.Product, err) {
+func (r *productRepository) GetByID(ctx context.Context, id int64) (*domain.Product, error) {
 	query := `
 		SELECT id, name, description, price, stock, category, is_active, created_at, updated_at
 		FROM products
@@ -45,7 +45,7 @@ func (r *productRepository) GetbyID(ctx context.Context, id int64) (*domain.Prod
 	`
 	p := &domain.Product{}
 	err := r.db.QueryRow(ctx, query, id).Scan(&p.ID, &p.Name, &p.Description, &p.Price, &p.Stock, &p.Category, &p.IsActive, &p.CreatedAt, &p.UpdatedAt)
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("product not found: %w", err)
 	}
@@ -60,13 +60,13 @@ func (r *productRepository) List(ctx context.Context, filter domain.ProductFilte
 
 	if filter.Search != "" {
 		conditions = append(conditions, fmt.Sprintf("name ILIKE $%d", argIndex))
-		args = append(args, "%" + filter.Search + "%")
+		args = append(args, "%"+filter.Search+"%")
 		argIndex++
 	}
 
 	if filter.Category != "" {
 		conditions = append(conditions, fmt.Sprintf("name ILIKE $%d", argIndex))
-		args = append(args, "%" + filter.Category + "%")
+		args = append(args, "%"+filter.Category+"%")
 		argIndex++
 	}
 
@@ -111,8 +111,7 @@ func (r *productRepository) Update(ctx context.Context, product *domain.Product)
 		RETURNING updated_at
 	`
 	return r.db.QueryRow(ctx, query, product.Name, product.Description, product.Price,
-		product.Stock, product.Category, product.IsActive, product.ID
-		).Scan(&product.UpdatedAt)
+		product.Stock, product.Category, product.IsActive, product.ID).Scan(&product.UpdatedAt)
 }
 
 // delete (deactivate) product to preserve stock tracking history
