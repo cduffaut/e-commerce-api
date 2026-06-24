@@ -22,7 +22,7 @@ type userService struct {
 	jwtSecret string
 }
 
-func newUserService(repo repository.UserRepository, jwtSecret string) UserService {
+func NewUserService(repo repository.UserRepository, jwtSecret string) UserService {
 	return &userService{repo: repo, jwtSecret: jwtSecret}
 }
 
