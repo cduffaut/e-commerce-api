@@ -12,7 +12,7 @@ import (
 type ProductRepository interface {
 	Create(ctx context.Context, product *domain.Product) error
 	GetByID(ctx context.Context, id int64) (*domain.Product, error)
-	List(ctx context.Context, filter domain.ProductFilter) ([]domain.Product, error)
+	List(ctx context.Context, filter domain.ProductsFilter) ([]domain.Product, error)
 	Update(ctx context.Context, product *domain.Product) error
 	Delete(ctx context.Context, id int64) error
 	UpdateStock(ctx context.Context, id int64, delta int) error
@@ -53,7 +53,7 @@ func (r *productRepository) GetByID(ctx context.Context, id int64) (*domain.Prod
 	return p, nil
 }
 
-func (r *productRepository) List(ctx context.Context, filter domain.ProductFilter) ([]domain.Product, error) {
+func (r *productRepository) List(ctx context.Context, filter domain.ProductsFilter) ([]domain.Product, error) {
 	conditions := []string{"is_active = true"}
 	args := []any{}
 	argIndex := 1

@@ -33,7 +33,7 @@ type UpdateProductRequest struct {
 }
 
 // parameters for filters/research
-type ProductFilter struct {
+type ProductsFilter struct {
 	Search   string `form:"q"`
 	Category string `form:"category"`
 	Page     int    `form:"page,default=1"`
