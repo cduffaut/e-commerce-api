@@ -14,7 +14,7 @@ type Product struct {
 	UpdatedAt   time.Time `db:"updated_at"`
 }
 
-// resered to admin
+// reserved to admin
 type CreateProductRequest struct {
 	Name        string  `json:"name" binding:"required"`
 	Description string  `json:"description"`
