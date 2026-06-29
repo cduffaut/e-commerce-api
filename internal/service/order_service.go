@@ -105,3 +105,7 @@ func (s *orderService) Checkout(ctx context.Context, userID int64) (*domain.Chec
 
 	return &domain.CheckoutResponse{OrderID: order.ID, ClientSecret: pi.ClientSecret}, nil
 }
+
+func (s *orderService) ConfirmPayment(ctx context.Context, stripePaymentID string) error {
+	return s.orderRepo.UpdateStatus(ctx, 0, "paid", stripePaymentID)
+}
