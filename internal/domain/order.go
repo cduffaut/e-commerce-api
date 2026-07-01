@@ -7,7 +7,7 @@ type Order struct {
 	UserID          int64     `db:"user_id"`
 	Status          string    `db:"status"`
 	TotalAmount     float64   `db:"total_amount"`
-	StripePaymentID float64   `db:"stripe_payment_id"`
+	StripePaymentID string    `db:"stripe_payment_id"`
 	CreatedAt       time.Time `db:"created_at"`
 	UpdatedAt       time.Time `db:"updated_at"`
 }

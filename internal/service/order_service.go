@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/stripe/stripe-go/v82"
 	"github.com/stripe/stripe-go/v82/paymentintent"
@@ -74,17 +73,12 @@ func (s *orderService) Checkout(ctx context.Context, userID int64) (*domain.Chec
 		return nil, fmt.Errorf("failed to create payment intent: %w", err)
 	}
 
-	pi_id, err := strconv.ParseFloat(pi.ID, 64)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert string to float for payment %s", pi.ID)
-	}
-
 	// create command in DB
 	order := &domain.Order{
 		UserID:          userID,
 		Status:          "pending",
 		TotalAmount:     totalAmount,
-		StripePaymentID: pi_id,
+		StripePaymentID: pi.ID,
 	}
 
 	if err := s.orderRepo.Create(ctx, order, orderItems); err != nil {
@@ -93,7 +87,7 @@ func (s *orderService) Checkout(ctx context.Context, userID int64) (*domain.Chec
 
 	// update stock
 	for _, item := range orderItems {
-		if err := s.productRepo.UpdateStock(ctx, item.OrderID, -item.Quantity); err != nil {
+		if err := s.productRepo.UpdateStock(ctx, item.ProductID, -item.Quantity); err != nil {
 			return nil, fmt.Errorf("failed to update stock: %w", err)
 		}
 	}
@@ -104,6 +98,68 @@ func (s *orderService) Checkout(ctx context.Context, userID int64) (*domain.Chec
 	}
 
 	return &domain.CheckoutResponse{OrderID: order.ID, ClientSecret: pi.ClientSecret}, nil
+}
+
+func (s *orderService) GetOrder(ctx context.Context, userID int64, orderID int64) (*domain.OrderResponse, error) {
+	order, err := s.orderRepo.GetByID(ctx, orderID, userID)
+
+	if err != nil {
+		return nil, fmt.Errorf("order not found: %w", err)
+	}
+
+	items, err := s.orderRepo.GetItems(ctx, orderID)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get order items: %w", err)
+	}
+
+	// add each line with product name
+	itemResponses := []domain.OrderItemResponse{}
+	for _, item := range items {
+		product, err := s.productRepo.GetByID(ctx, item.ProductID)
+		productName := "Deleted product"
+		if err == nil {
+			productName = product.Name
+		}
+
+		itemResponses = append(itemResponses, domain.OrderItemResponse{
+			ID:          item.ID,
+			ProductID:   item.ProductID,
+			ProductName: productName,
+			Quantity:    item.Quantity,
+			UnitPrice:   item.UnitPrice,
+			Subtotal:    (item.UnitPrice * float64(item.Quantity)),
+		})
+	}
+
+	return &domain.OrderResponse{
+		ID:              order.ID,
+		Status:          order.Status,
+		Items:           itemResponses,
+		TotalAmount:     order.TotalAmount,
+		StripePaymentID: order.StripePaymentID,
+		CreatedAt:       order.CreatedAt,
+	}, nil
+}
+
+func (s *orderService) ListOrders(ctx context.Context, userID int64) ([]domain.OrderResponse, error) {
+	orders, err := s.orderRepo.ListByUser(ctx, userID)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to list orders: %w", err)
+	}
+
+	responses := []domain.OrderResponse{}
+	for _, order := range orders {
+		responses = append(responses, domain.OrderResponse{
+			ID:          order.ID,
+			Status:      order.Status,
+			TotalAmount: order.TotalAmount,
+			CreatedAt:   order.CreatedAt,
+		})
+	}
+
+	return responses, nil
 }
 
 func (s *orderService) ConfirmPayment(ctx context.Context, stripePaymentID string) error {
